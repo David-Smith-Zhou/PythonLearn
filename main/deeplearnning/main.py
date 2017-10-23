@@ -1,0 +1,161 @@
+# -*- coding: utf-8 -*- f
+
+
+# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""A very simple MNIST classifier.
+See extensive documentation at
+https://www.tensorflow.org/get_started/mnist/beginners
+"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import argparse
+import sys
+
+from tensorflow.examples.tutorials.mnist import input_data
+
+import tensorflow as tf
+
+FLAGS = None
+
+
+def main(_):
+    # Import data
+    mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
+
+    # Create the model
+    x = tf.placeholder(tf.float32, [None, 784])
+    W = tf.Variable(tf.zeros([784, 10]))
+    b = tf.Variable(tf.zeros([10]))
+    y = tf.matmul(x, W) + b
+
+    # Define loss and optimizer
+    y_ = tf.placeholder(tf.float32, [None, 10])
+
+    # The raw formulation of cross-entropy,
+    #
+    #   tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(tf.nn.softmax(y)),
+    #                                 reduction_indices=[1]))
+    #
+    # can be numerically unstable.
+    #
+    # So here we use tf.nn.softmax_cross_entropy_with_logits on the raw
+    # outputs of 'y', and then average across the batch.
+    cross_entropy = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
+    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+    sess = tf.InteractiveSession()
+    tf.global_variables_initializer().run()
+    # Train
+    for _ in range(1000):
+        batch_xs, batch_ys = mnist.train.next_batch(100)
+        sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+    # Test trained model
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    print(sess.run(accuracy, feed_dict={x: mnist.test.images,
+                                        y_: mnist.test.labels}))
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, default='/tmp/tensorflow/mnist/input_data',
+                        help='Directory for storing input data')
+    FLAGS, unparsed = parser.parse_known_args()
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+# import tensorflow as tf
+# import numpy as np
+#
+# def test_1():
+#     hello = tf.constant("Hello, TensorFlow")
+#     sess = tf.Session()
+#     print(sess.run(hello))
+#
+#     node1 = tf.constant(3.0, dtype=tf.float32)
+#     node2 = tf.constant(4.0)
+#     print(node1, node2)
+#     sess = tf.Session()
+#     print(sess.run([node1, node2]))
+#     node3 = tf.add(node1, node2)
+#     print("node3: ", node3)
+#     print("sess.run(node3): ", sess.run(node3))
+#
+#     a = tf.placeholder(tf.float32)
+#     b = tf.placeholder(tf.float32)
+#     adder_node = a + b
+#     print(sess.run(adder_node, {a: 3, b: 4.5}))
+#     print(sess.run(adder_node, {a: [1, 3], b: [2, 4]}))
+#
+#     add_and_triple = adder_node * 3.
+#     print(sess.run(add_and_triple, {a: 3, b: 4.5}))
+#
+#     # 定义可变参数和模型
+#     W = tf.Variable([.3], dtype=tf.float32)
+#     b = tf.Variable([-.3], dtype=tf.float32)
+#     x = tf.placeholder(tf.float32)
+#     linear_model = W * x + b
+#
+#     # 初始化可调参数
+#     init = tf.global_variables_initializer()
+#     sess.run(init)
+#
+#     print(sess.run(linear_model, {x: [1, 2, 3, 4]}))
+#
+#     y = tf.placeholder(tf.float32)
+#     squared_deltas = tf.square(linear_model - y)
+#     loss = tf.reduce_sum(squared_deltas)
+#     print(sess.run(loss, {x: [1, 2, 3, 4], y: [0, -1, -2, -3]}))
+#
+#     fixW = tf.assign(W, [-1.])
+#     fixb = tf.assign(b, [1.])
+#     sess.run([fixW, fixb])
+#     print(sess.run(loss, {x: [1, 2, 3, 4], y: [0, -1, -2, -3]}))
+#
+#     optimizer = tf.train.GradientDescentOptimizer(0.01)
+#     train = optimizer.minimize(loss)
+#
+#     sess.run(init)
+#     for i in range(1000):
+#         sess.run(train, {x: [1, 2, 3, 4], y: [0, -1, -2, -3]})
+#     print(sess.run([W, b]))
+#
+#
+# def test_2():
+#     features = [tf.contrib.layers.real_valued_column("x", dimension=1)]
+#     estimator = tf.contrib.learn.LinearRegressor(feature_columns=features)
+#     x_train = np.array([1., 2., 3., 4.])
+#     y_train = np.array([0., -1., -2., -3.])
+#     x_eval = np.array([2., 5., 8., 1.])
+#     y_eval = np.array([-1.01, -4.1, -7., 0.])
+#     input_fn = tf.contrib.learn.io.numpy_input_fn({"x": x_train}, y_train, batch_size=4, num_epochs=1000)
+#     eval_input_fn = tf.contrib.learn.io.numpy_input_fn({"x": x_eval}, y_eval, batch_size=4, num_epochs=1000)
+#     estimator.fit(input_fn=input_fn, steps=1000)
+#     train_loss = estimator.evaluate(input_fn=input_fn)
+#     eval_loss = estimator.evaluate(input_fn=eval_input_fn)
+#     print("train loss: %r" % train_loss)
+#     print("eval loss: %r" % eval_loss)
+#
+#
+# def main():
+#     test_2()
+#
+# if __name__ == '__main__':
+#     main()
