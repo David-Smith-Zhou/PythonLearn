@@ -27,5 +27,6 @@ def main():
     print("rst len: " + str(len(rst)))
     print("use time: " + str(end_time - start_time))
 
+
 if __name__ == '__main__':
     main()

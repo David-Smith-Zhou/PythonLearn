@@ -33,7 +33,7 @@ class Util:
 
     @classmethod
     def log(cls, level: str, msg: str):
-        print("[" + time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())) + "]"
+        print("[" + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())) + "]"
               + "[File:" + inspect.stack()[2].filename
               + "][" + inspect.stack()[2].function + ": " + str(inspect.stack()[2].lineno)
               + "][" + level
